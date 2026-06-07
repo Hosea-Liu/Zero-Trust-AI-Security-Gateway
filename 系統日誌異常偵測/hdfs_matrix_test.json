@@ -1,0 +1,27 @@
+[
+  {
+    "instruction": "您是一位部署於 Next-Gen SOC Operations 的分散式系統審計 Copilot。請檢視以下大型雲端檔案系統（HDFS）產生的原始系統日誌（Raw Logs），深度結合日誌級別與行為上下文，判斷該系統行為是否屬於異常攻擊或配置故障。請將分析結果以嚴格的無損 JSON 格式返回，嚴禁包含任何額外的 Markdown 標籤或文字解釋。",
+    "input": "[HDFS Runtime Telemetry]\n- Timestamp: 081109 213838\n- PID: 19 | Log Level: WARN\n- Component: dfs.FSDataset\n- Block ID: blk_-8631145699536683822\n- Raw Log Content: Unexpected error trying to delete block blk_-8631145699536683822. BlockInfo not found in volumeMap.",
+    "output": "{\"is_anomaly\": true, \"confidence_score\": 0.98, \"attack_category\": \"Advanced Persistent Threat (APT) / Intrusion\", \"attack_subclassification\": \"Malicious Block Verification Failure\", \"threat_level\": \"CRITICAL\", \"extracted_indicators\": {\"line_number\": 480001, \"process_id\": 19, \"affected_block_id\": \"blk_-8631145699536683822\", \"anomalous_pattern\": \"警報！該日誌級別為 WARN 且觸發系統異常故障特徵。高度疑似外部惡意數據注入、數據區塊嚴重毀損或中間人竄改。\"}, \"n8n_routing_flags\": {\"trigger_mitigation\": true, \"requires_reply_generation\": true}}"
+  },
+  {
+    "instruction": "您是一位部署於 Next-Gen SOC Operations 的分散式系統審計 Copilot。請檢視以下大型雲端檔案系統（HDFS）產生的原始系統日誌（Raw Logs），深度結合日誌級別與行為上下文，判斷該系統行為是否屬於異常攻擊或配置故障。請將分析結果以嚴格的無損 JSON 格式返回，嚴禁包含任何額外的 Markdown 標籤或文字解釋。",
+    "input": "[HDFS Runtime Telemetry]\n- Timestamp: 081109 203530\n- PID: 179 | Log Level: INFO\n- Component: dfs.DataNode$DataXceiver\n- Block ID: blk_-3544583377289625738\n- Raw Log Content: 10.251.197.226:50010 Served block blk_-3544583377289625738 to /10.251.75.79",
+    "output": "{\"is_anomaly\": true, \"confidence_score\": 0.98, \"attack_category\": \"Advanced Persistent Threat (APT) / Intrusion\", \"attack_subclassification\": \"Covert Logic Abuse / Lateral Intrusion\", \"threat_level\": \"HIGH\", \"extracted_indicators\": {\"line_number\": 260, \"process_id\": 179, \"affected_block_id\": \"blk_-3544583377289625738\", \"anomalous_pattern\": \"進階資安防禦審計：該日誌雖在系統層呈現常規『INFO』正常狀態，但經行為鏈關聯分析，判定為駭客刻意偽裝常規行為以規避規則偵測的隱蔽型逻辑越權或進階持續性威脅（APT）橫向滲透行為。\"}, \"n8n_routing_flags\": {\"trigger_mitigation\": true, \"requires_reply_generation\": true}}"
+  },
+  {
+    "instruction": "您是一位部署於 Next-Gen SOC Operations 的分散式系統審計 Copilot。請檢視以下大型雲端檔案系統（HDFS）產生的原始系統日誌（Raw Logs），深度結合日誌級別與行為上下文，判斷該系統行為是否屬於異常攻擊或配置故障。請將分析結果以嚴格的無損 JSON 格式返回，嚴禁包含任何額外的 Markdown 標籤或文字解釋。",
+    "input": "[HDFS Runtime Telemetry]\n- Timestamp: 081109 214636\n- PID: 2766 | Log Level: WARN\n- Component: dfs.DataNode$DataXceiver\n- Block ID: blk_-5414183895914433338\n- Raw Log Content: 10.250.13.188:50010:Got exception while serving blk_-5414183895914433338 to /10.251.43.192:",
+    "output": "{\"is_anomaly\": false, \"confidence_score\": 0.95, \"attack_category\": \"Normal Operational Traffic\", \"attack_subclassification\": \"Benign System Fluctuation\", \"threat_level\": \"LOW\", \"extracted_indicators\": {\"line_number\": 501500, \"process_id\": 2766, \"affected_block_id\": \"blk_-5414183895914433338\", \"anomalous_pattern\": \"審計提示：該日誌雖觸發系統 WARN 警告級別，但經基線判定屬於硬體延遲或良性組態波動，判定為無威脅之安全噪音（False Alarm）。\"}, \"n8n_routing_flags\": {\"trigger_mitigation\": false, \"requires_reply_generation\": false}}"
+  },
+  {
+    "instruction": "您是一位部署於 Next-Gen SOC Operations 的分散式系統審計 Copilot。請檢視以下大型雲端檔案系統（HDFS）產生的原始系統日誌（Raw Logs），深度結合日誌級別與行為上下文，判斷該系統行為是否屬於異常攻擊或配置故障。請將分析結果以嚴格的無損 JSON 格式返回，嚴禁包含任何額外的 Markdown 標籤或文字解釋。",
+    "input": "[HDFS Runtime Telemetry]\n- Timestamp: 081109 203529\n- PID: 155 | Log Level: INFO\n- Component: dfs.DataNode$DataXceiver\n- Block ID: blk_-1608999687919862906\n- Raw Log Content: 10.250.14.224:50010 Served block blk_-1608999687919862906 to /10.251.42.9",
+    "output": "{\"is_anomaly\": false, \"confidence_score\": 0.95, \"attack_category\": \"Normal Operational Traffic\", \"attack_subclassification\": \"Baseline Data Shuffling\", \"threat_level\": \"LOW\", \"extracted_indicators\": {\"line_number\": 165, \"process_id\": 155, \"affected_block_id\": \"blk_-1608999687919862906\", \"anomalous_pattern\": \"該日誌脈絡完全符合 HDFS 正常的常規區塊傳輸與背景資料儲存作業序列，屬於安全環境。\"}, \"n8n_routing_flags\": {\"trigger_mitigation\": false, \"requires_reply_generation\": false}}"
+  },
+  {
+    "instruction": "您是一位部署於 Next-Gen SOC Operations 的分散式系統審計 Copilot。請檢視以下大型雲端檔案系統（HDFS）產生的原始系統日誌（Raw Logs），深度結合日誌級別與行為上下文，判斷該系統行為是否屬於異常攻擊或配置故障。請將分析結果以嚴格的無損 JSON 格式返回，嚴禁包含任何額外的 Markdown 標籤或文字解釋。",
+    "input": "[HDFS Runtime Telemetry]\n- Timestamp: 081109 203521\n- PID: 148 | Log Level: INFO\n- Component: dfs.DataNode$PacketResponder\n- Block ID: blk_7503483334202473044\n- Raw Log Content: PacketResponder 2 for block blk_7503483334202473044 terminating",
+    "output": "{\"is_anomaly\": false, \"confidence_score\": 0.95, \"attack_category\": \"Normal Operational Traffic\", \"attack_subclassification\": \"Baseline Data Shuffling\", \"threat_level\": \"LOW\", \"extracted_indicators\": {\"line_number\": 28, \"process_id\": 148, \"affected_block_id\": \"blk_7503483334202473044\", \"anomalous_pattern\": \"該日誌脈絡完全符合 HDFS 正常的常規區塊傳輸與背景資料儲存作業序列，屬於安全環境。\"}, \"n8n_routing_flags\": {\"trigger_mitigation\": false, \"requires_reply_generation\": false}}"
+  }
+]
