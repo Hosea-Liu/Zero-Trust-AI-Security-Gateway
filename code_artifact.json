@@ -1,0 +1,302 @@
+{
+  "name": "SOC 終極三層聯防工作流 (Serverless Demo 版)",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "trigger-start",
+      "name": "手動觸發測試",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [0, 200]
+    },
+    {
+      "parameters": {
+        "values": {
+          "string": [
+            {
+              "name": "text",
+              "value": "My ID is A123456789. What is machine learning?"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "set-input",
+      "name": "模擬前端輸入",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [200, 200]
+    },
+    {
+      "parameters": {
+        "jsCode": "let inputData = $input.first().json;\nlet text = inputData.text || \"\";\nlet fallback_action = \"PASS\";\n\n// 模擬第一關 GLiNER + Regex：偵測身分證、信用卡、API 金鑰\nlet idRegex = /[A-Z][12]\\d{8}/g;\nlet cardRegex = /\\d{4}-\\d{4}-\\d{4}-\\d{4}/g;\nlet keyRegex = /sk-[a-zA-Z0-9\\-]+/g;\n\nif (text.match(idRegex) || text.match(cardRegex) || text.match(keyRegex)) {\n    fallback_action = \"BLOCK\";\n}\n\nlet anonymized = text.replace(idRegex, \"[REDACTED]\")\n                     .replace(cardRegex, \"[REDACTED]\")\n                     .replace(keyRegex, \"[REDACTED]\");\n\nreturn { json: { fallback_action: fallback_action, anonymized: anonymized, original_text: text, audit: true } };"
+      },
+      "id": "api-guardrail-mock",
+      "name": "1.去識別化Guardrail (模擬)",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [440, 200]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "check-block",
+              "leftValue": "={{ $json.fallback_action }}",
+              "rightValue": "BLOCK",
+              "operator": {
+                "type": "string",
+                "operation": "notEquals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "if-guardrail",
+      "name": "檢查Guardrail放行",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [680, 200]
+    },
+    {
+      "parameters": {
+        "jsCode": "let inputData = $input.first().json;\nlet text = inputData.anonymized || \"\";\nlet textLower = text.toLowerCase();\n\n// 模擬第二關 SFT 模型：偵測越獄與惡意意圖\nlet is_attack = false;\nlet attack_type = \"none\";\n\nif (textLower.includes(\"ignore\") || textLower.includes(\"exploit\") || textLower.includes(\"hack\") || textLower.includes(\"腳本\")) {\n    is_attack = true;\n    attack_type = \"prompt_injection\";\n}\n\nlet responseObj = {\n    is_attack: is_attack,\n    attack_type: attack_type,\n    risk_level: is_attack ? \"high\" : \"low\"\n};\n\n// 模擬 LLM 吐出 JSON 字串\nreturn { json: { ...inputData, response: JSON.stringify(responseObj) } };"
+      },
+      "id": "api-intent-mock",
+      "name": "2.意圖防禦大腦 (模擬)",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [940, 100]
+    },
+    {
+      "parameters": {
+        "jsCode": "try {\n  let rawStr = $input.all()[0].json.response;\n  let startIndex = rawStr.indexOf('{');\n  let endIndex = rawStr.lastIndexOf('}');\n  let cleanJsonStr = rawStr.substring(startIndex, endIndex + 1);\n  let parsed = JSON.parse(cleanJsonStr);\n  return { json: { ...$input.all()[0].json, ai_intent: parsed } };\n} catch (e) {\n  return { json: { ai_intent: { is_attack: false, error: '解析失敗' } } };\n}"
+      },
+      "id": "parse-intent",
+      "name": "解析JSON結果",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1160, 100]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "check-attack",
+              "leftValue": "={{ $json.ai_intent.is_attack }}",
+              "rightValue": false,
+              "operator": {
+                "type": "boolean",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "if-intent",
+      "name": "檢查是否無惡意",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [1380, 100]
+    },
+    {
+      "parameters": {
+        "jsCode": "let inputData = $input.first().json;\nlet text = inputData.anonymized || \"\";\n\n// 模擬第三關異常偵測大腦：偵測 HDFS 與網路特徵\nlet is_anomaly = false;\nif (text.includes(\"Destination Port\") || text.includes(\"TCP\") || text.includes(\"HDFS\") || text.includes(\"Block ID\")) {\n    is_anomaly = true;\n}\n\nreturn { json: { ...inputData, is_anomaly: is_anomaly } };"
+      },
+      "id": "api-anomaly-mock",
+      "name": "3.異常偵測大腦 (模擬)",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1640, 0]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "check-anomaly",
+              "leftValue": "={{ $json.is_anomaly }}",
+              "rightValue": false,
+              "operator": {
+                "type": "boolean",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "if-anomaly",
+      "name": "檢查是否無異常",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [1860, 0]
+    },
+    {
+      "parameters": {},
+      "id": "block-end",
+      "name": "執行攔截_Block",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [1860, 400]
+    },
+    {
+      "parameters": {},
+      "id": "pass-end",
+      "name": "正常放行_Pass",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [2140, 0]
+    }
+  ],
+  "connections": {
+    "手動觸發測試": {
+      "main": [
+        [
+          {
+            "node": "模擬前端輸入",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "模擬前端輸入": {
+      "main": [
+        [
+          {
+            "node": "1.去識別化Guardrail (模擬)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "1.去識別化Guardrail (模擬)": {
+      "main": [
+        [
+          {
+            "node": "檢查Guardrail放行",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "檢查Guardrail放行": {
+      "main": [
+        [
+          {
+            "node": "2.意圖防禦大腦 (模擬)",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "執行攔截_Block",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "2.意圖防禦大腦 (模擬)": {
+      "main": [
+        [
+          {
+            "node": "解析JSON結果",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "解析JSON結果": {
+      "main": [
+        [
+          {
+            "node": "檢查是否無惡意",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "檢查是否無惡意": {
+      "main": [
+        [
+          {
+            "node": "3.異常偵測大腦 (模擬)",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "執行攔截_Block",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "3.異常偵測大腦 (模擬)": {
+      "main": [
+        [
+          {
+            "node": "檢查是否無異常",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "檢查是否無異常": {
+      "main": [
+        [
+          {
+            "node": "正常放行_Pass",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "執行攔截_Block",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  }
+}
